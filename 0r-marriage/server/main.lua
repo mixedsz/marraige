@@ -174,9 +174,11 @@ RegisterNetEvent('0r-marriage-check-for-marry-s', function(location)
         { srcIdent, targetIdent, srcName, targetName, date, day, clock, location }
     )
 
-    -- Give both players their certificate item
+    -- Give both players their certificate and engagement ring items
     AddItem(src,    Config.CertificateItem, 1)
     AddItem(target, Config.CertificateItem, 1)
+    AddItem(src,    Config.RingItem, 1)
+    AddItem(target, Config.RingItem, 1)
 
     local certData = {
         groom  = srcName,
@@ -371,3 +373,50 @@ RegisterNetEvent('ServerValidEmote', function(targetId, emoteId, emoteData)
     -- Source plays the other half, positioned relative to the target
     TriggerClientEvent('SyncPlayEmoteSource', src, emoteId, targetId)
 end)
+
+-- ─────────────────────────────────────────────
+--  Engagement ring item use → open ring menu
+--  This is the primary way married players access
+--  the hug / live-map / HUD / ERP options.
+-- ─────────────────────────────────────────────
+
+local function OnRingItemUsed(src)
+    local srcIdent = GetCharacterIdentifier(src)
+    if not srcIdent then return end
+
+    local result = MySQL.query.await(
+        'SELECT * FROM `0r_marriage` WHERE `player1` = ? OR `player2` = ?',
+        { srcIdent, srcIdent }
+    )
+    if not result or #result == 0 then
+        ServerNotify(src, Locs.youaredivorced, 'error')
+        return
+    end
+
+    local marriage     = result[1]
+    local isPlayer1    = (marriage.player1 == srcIdent)
+    local partnerIdent = isPlayer1 and marriage.player2 or marriage.player1
+    local storedName   = isPlayer1 and marriage.name2   or marriage.name1
+
+    local partnerSrc  = FindPlayerByIdentifier(partnerIdent)
+    TriggerClientEvent('0r-marriage-open-ring-menu', src, partnerSrc or 0, storedName or partnerIdent)
+end
+
+if Config.Inventory == 'ox' then
+    exports.ox_inventory:registerHook('useItem', function(payload)
+        if payload.item.name == Config.RingItem then
+            CreateThread(function()
+                OnRingItemUsed(payload.source)
+            end)
+        end
+    end, { itemFilter = { [Config.RingItem] = true } })
+elseif Config.Inventory == 'qb' then
+    Core.Functions.CreateUseableItem(Config.RingItem, function(src)
+        CreateThread(function() OnRingItemUsed(src) end)
+    end)
+else
+    -- ESX (and ls-inventory which proxies through ESX usable items)
+    Core.RegisterUsableItem(Config.RingItem, function(src)
+        CreateThread(function() OnRingItemUsed(src) end)
+    end)
+end
