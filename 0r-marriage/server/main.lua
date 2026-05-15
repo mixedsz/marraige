@@ -3,6 +3,22 @@
 local pendingData = {}
 
 -- ─────────────────────────────────────────────
+--  MySQL compatibility helpers
+--  Some oxmysql builds expose MySQL.query/execute
+--  as plain functions (not tables), so .await
+--  cannot be indexed on them.  Citizen.Await()
+--  works with any version that returns a promise.
+-- ─────────────────────────────────────────────
+
+local function dbQuery(query, params)
+    return Citizen.Await(MySQL.query(query, params))
+end
+
+local function dbExecute(query, params)
+    return Citizen.Await(MySQL.execute(query, params))
+end
+
+-- ─────────────────────────────────────────────
 --  Database initialisation
 -- ─────────────────────────────────────────────
 
@@ -30,7 +46,7 @@ end)
 local function LoadPlayerMarriage(src, identifier)
     if not identifier then return end
 
-    local result = MySQL.query.await(
+    local result = dbQuery(
         'SELECT * FROM `0r_marriage` WHERE `player1` = ? OR `player2` = ?',
         { identifier, identifier }
     )
@@ -41,7 +57,6 @@ local function LoadPlayerMarriage(src, identifier)
     local partnerIdent = isPlayer1 and marriage.player2 or marriage.player1
     local partnerName  = isPlayer1 and marriage.name2   or marriage.name1
 
-    -- Prefer the live server source; fall back to the stored name if offline.
     local partnerSrc = FindPlayerByIdentifier(partnerIdent)
     TriggerClientEvent('0r-marriage-open-ring-menu', src, partnerSrc or 0, partnerName or partnerIdent)
 end
@@ -60,13 +75,11 @@ end)
 
 -- ─────────────────────────────────────────────
 --  Step 1 – Proposer talks to the priest
---  Client → Server: nearest player's server ID
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage-check-for-marry', function(targetSrc)
     local src = source
 
-    -- Must have the propose item in hand
     if not HasItem(src, Config.ProposeItem) then
         ServerNotify(src, Locs.noring, 'error')
         return
@@ -76,8 +89,7 @@ RegisterNetEvent('0r-marriage-check-for-marry', function(targetSrc)
     local targetIdent = GetCharacterIdentifier(targetSrc)
     if not srcIdent or not targetIdent then return end
 
-    -- Neither party may already be married
-    local r1 = MySQL.query.await(
+    local r1 = dbQuery(
         'SELECT id FROM `0r_marriage` WHERE `player1` = ? OR `player2` = ?',
         { srcIdent, srcIdent }
     )
@@ -86,7 +98,7 @@ RegisterNetEvent('0r-marriage-check-for-marry', function(targetSrc)
         return
     end
 
-    local r2 = MySQL.query.await(
+    local r2 = dbQuery(
         'SELECT id FROM `0r_marriage` WHERE `player1` = ? OR `player2` = ?',
         { targetIdent, targetIdent }
     )
@@ -95,24 +107,18 @@ RegisterNetEvent('0r-marriage-check-for-marry', function(targetSrc)
         return
     end
 
-    -- Consume the proposal item and begin the sequence
     RemoveItem(src, Config.ProposeItem, 1)
     pendingData[src] = targetSrc
-
-    -- Tell the proposer to play the kneeling animation
     TriggerClientEvent('0r-marriage-propose', src, src)
 end)
 
 -- ─────────────────────────────────────────────
---  Step 2 – Proposer has played the animation;
---  forward the proposal UI to the target
+--  Step 2 – Forward proposal UI to the target
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage-propose-her', function(targetSrc, proposerSrc)
-    local src          = source
-    local proposerName = GetCharacterName(src)
-
-    TriggerClientEvent('0r-marriage-show-menu', targetSrc, 'propose', src, proposerName)
+    local src = source
+    TriggerClientEvent('0r-marriage-show-menu', targetSrc, 'propose', src, GetCharacterName(src))
 end)
 
 -- ─────────────────────────────────────────────
@@ -120,27 +126,21 @@ end)
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage-make-action', function(action, proposerSrc)
-    local src    = source -- target / accepter
-    local target = src
+    local target = source
 
     if action == 'yes' then
-        -- Celebration animations on both sides
         TriggerClientEvent('0r-marriage-yes',  proposerSrc)
         TriggerClientEvent('0r-marriage-yes2', target)
 
-        -- Give the animations time to play before starting the ceremony
         Citizen.SetTimeout(6000, function()
-            local proposerName = GetCharacterName(proposerSrc)
-            local targetName   = GetCharacterName(target)
-            local names        = { proposer = proposerName, target = targetName }
-
-            -- me = true  → proposer will trigger the DB save after the ceremony
-            -- me = false → target just watches
+            local names = {
+                proposer = GetCharacterName(proposerSrc),
+                target   = GetCharacterName(target),
+            }
             TriggerClientEvent('0r-marriage-marry-c', proposerSrc, true,  names)
             TriggerClientEvent('0r-marriage-marry-c', target,      false, names)
         end)
     else
-        -- Rejection animations
         TriggerClientEvent('0r-marriage-no',  proposerSrc)
         TriggerClientEvent('0r-marriage-no2', target)
         pendingData[proposerSrc] = nil
@@ -164,17 +164,15 @@ RegisterNetEvent('0r-marriage-check-for-marry-s', function(location)
 
     local srcName    = GetCharacterName(src)
     local targetName = GetCharacterName(target)
+    local date       = os.date('%d-%m-%Y')
+    local day        = os.date('%A')
+    local clock      = os.date('%H:%M')
 
-    local date  = os.date('%d-%m-%Y')
-    local day   = os.date('%A')
-    local clock = os.date('%H:%M')
-
-    MySQL.execute.await(
+    dbExecute(
         'INSERT INTO `0r_marriage` (`player1`,`player2`,`name1`,`name2`,`date`,`day`,`clock`,`location`) VALUES (?,?,?,?,?,?,?,?)',
         { srcIdent, targetIdent, srcName, targetName, date, day, clock, location }
     )
 
-    -- Give both players their certificate and engagement ring items
     AddItem(src,    Config.CertificateItem, 1)
     AddItem(target, Config.CertificateItem, 1)
     AddItem(src,    Config.RingItem, 1)
@@ -190,11 +188,9 @@ RegisterNetEvent('0r-marriage-check-for-marry-s', function(location)
         priest = Config.PriestName,
     }
 
-    -- Display the marriage certificate UI to both players
     TriggerClientEvent('0r-marriage-show-menu', src,    'certificate', certData, '')
     TriggerClientEvent('0r-marriage-show-menu', target, 'certificate', certData, '')
 
-    -- Open the partner-interaction ring menu for both players
     Citizen.SetTimeout(3500, function()
         TriggerClientEvent('0r-marriage-open-ring-menu', src,    target, targetName)
         TriggerClientEvent('0r-marriage-open-ring-menu', target, src,    srcName)
@@ -202,7 +198,7 @@ RegisterNetEvent('0r-marriage-check-for-marry-s', function(location)
 end)
 
 -- ─────────────────────────────────────────────
---  Divorce – step 1: requester asks, target confirms
+--  Divorce – step 1: requester asks
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage-divorce-req', function(targetSrc)
@@ -212,7 +208,7 @@ RegisterNetEvent('0r-marriage-divorce-req', function(targetSrc)
     local targetIdent = GetCharacterIdentifier(targetSrc)
     if not srcIdent or not targetIdent then return end
 
-    local result = MySQL.query.await(
+    local result = dbQuery(
         'SELECT id FROM `0r_marriage` WHERE (`player1` = ? AND `player2` = ?) OR (`player1` = ? AND `player2` = ?)',
         { srcIdent, targetIdent, targetIdent, srcIdent }
     )
@@ -221,24 +217,22 @@ RegisterNetEvent('0r-marriage-divorce-req', function(targetSrc)
         return
     end
 
-    -- Ask the target to confirm the divorce dialog
     TriggerClientEvent('0r-marriage-divorce-req-c', targetSrc, src, targetSrc)
 end)
 
 -- ─────────────────────────────────────────────
---  Divorce – step 2: target has confirmed
+--  Divorce – step 2: target confirms
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage-divorce', function(requesterId, confirmerId)
     local src = source
-    -- Validate that the source matches the confirmer passed by the client
     if src ~= confirmerId then return end
 
     local requesterIdent = GetCharacterIdentifier(requesterId)
     local confirmerIdent = GetCharacterIdentifier(confirmerId)
     if not requesterIdent or not confirmerIdent then return end
 
-    local rows = MySQL.execute.await(
+    local rows = dbExecute(
         'DELETE FROM `0r_marriage` WHERE (`player1` = ? AND `player2` = ?) OR (`player1` = ? AND `player2` = ?)',
         { requesterIdent, confirmerIdent, confirmerIdent, requesterIdent }
     )
@@ -254,18 +248,16 @@ end)
 --  Hug – request and accept/reject
 -- ─────────────────────────────────────────────
 
-RegisterNetEvent('0r-marriage-hug-request-s', function(targetId, requesterId)
-    local src = source  -- always trust source, not the client-supplied requesterId
+RegisterNetEvent('0r-marriage-hug-request-s', function(targetId)
+    local src = source
     TriggerClientEvent('0r-marriage-hug-request-c', targetId, src)
 end)
 
 RegisterNetEvent('0r-marriage-hug-action', function(action, requester)
-    local src = source -- accepter / rejecter
+    local src = source
 
     if action == 'accept' then
-        -- Requester plays their own hug anim
         TriggerClientEvent('0r-marriage-hug-acceptme',    requester)
-        -- Accepter positions themselves in front of the requester and plays anim
         TriggerClientEvent('0r-marriage-hug-acceptother', src, requester)
     else
         TriggerClientEvent('0r-marriage-hug-rejectme',    src)
@@ -274,28 +266,25 @@ RegisterNetEvent('0r-marriage-hug-action', function(action, requester)
 end)
 
 -- ─────────────────────────────────────────────
---  Live map – send partner's current coords
+--  Live map – relay partner's current coords
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage-update-blip', function(partnerId)
     local src = source
-
     if not partnerId or partnerId == 0 then return end
 
     local partnerPed = GetPlayerPed(partnerId)
     if not partnerPed or partnerPed == 0 then return end
 
-    local coords      = GetEntityCoords(partnerPed)
-    local partnerName = GetCharacterName(partnerId)
-
+    local cx, cy, cz = table.unpack(GetEntityCoords(partnerPed))
     TriggerClientEvent('0r-marriage-update-blip-render', src, {
-        coords = { x = coords.x, y = coords.y, z = coords.z },
-        name   = partnerName,
+        coords = { x = cx, y = cy, z = cz },
+        name   = GetCharacterName(partnerId),
     })
 end)
 
 -- ─────────────────────────────────────────────
---  HUD – periodic partner info update
+--  HUD – periodic partner info
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage-hud', function()
@@ -307,7 +296,7 @@ RegisterNetEvent('0r-marriage-hud', function()
         return
     end
 
-    local result = MySQL.query.await(
+    local result = dbQuery(
         'SELECT * FROM `0r_marriage` WHERE `player1` = ? OR `player2` = ?',
         { srcIdent, srcIdent }
     )
@@ -320,13 +309,11 @@ RegisterNetEvent('0r-marriage-hud', function()
     local isPlayer1    = (marriage.player1 == srcIdent)
     local partnerIdent = isPlayer1 and marriage.player2 or marriage.player1
     local storedName   = isPlayer1 and marriage.name2   or marriage.name1
-
-    -- Prefer live name if partner is online; use stored name otherwise
-    local partnerSrc  = FindPlayerByIdentifier(partnerIdent)
-    local partnerName = partnerSrc and GetCharacterName(partnerSrc) or storedName
+    local partnerSrc   = FindPlayerByIdentifier(partnerIdent)
 
     if partnerSrc then
-        TriggerClientEvent('0r-marriage-update-hud', src, partnerName, marriage.date)
+        local liveName = GetCharacterName(partnerSrc)
+        TriggerClientEvent('0r-marriage-update-hud', src, liveName, marriage.date)
     else
         ServerNotify(src, Locs.partnerOffline, 'error')
         TriggerClientEvent('0r-marriage-close-hud', src)
@@ -334,21 +321,17 @@ RegisterNetEvent('0r-marriage-hud', function()
 end)
 
 -- ─────────────────────────────────────────────
---  ERP – synced GTA animations between two players
+--  ERP – synced GTA animations
 -- ─────────────────────────────────────────────
 
 RegisterNetEvent('0r-marriage:requestSynced', function(targetId, animId)
-    local src          = source
-    local requesterName = GetCharacterName(src)
-    TriggerClientEvent('0r-marriage:syncRequest', targetId, src, animId, requesterName)
+    local src = source
+    TriggerClientEvent('0r-marriage:syncRequest', targetId, src, animId, GetCharacterName(src))
 end)
 
 RegisterNetEvent('0r-marriage:syncAccepted', function(requesterId, animId)
-    local src = source -- accepter
-
-    -- Requester: face the accepter (serverid = accepter), play 'Requester' role
+    local src = source
     TriggerClientEvent('0r-marriage:playSynced', requesterId, src,         animId, 'Requester')
-    -- Accepter: face the requester (serverid = requester), play 'Accepter' role
     TriggerClientEvent('0r-marriage:playSynced', src,         requesterId, animId, 'Accepter')
 end)
 
@@ -368,55 +351,59 @@ end)
 
 RegisterNetEvent('ServerValidEmote', function(targetId, emoteId, emoteData)
     local src = source
-    -- Target plays their half of the animation
-    TriggerClientEvent('SyncPlayEmote', targetId, emoteData, src)
-    -- Source plays the other half, positioned relative to the target
-    TriggerClientEvent('SyncPlayEmoteSource', src, emoteId, targetId)
+    TriggerClientEvent('SyncPlayEmote',       targetId, emoteData, src)
+    TriggerClientEvent('SyncPlayEmoteSource', src,      emoteId,   targetId)
 end)
 
 -- ─────────────────────────────────────────────
 --  Engagement ring item use → open ring menu
---  This is the primary way married players access
---  the hug / live-map / HUD / ERP options.
+--  Players use this item to access hug / live-map
+--  / HUD / ERP after being married.
 -- ─────────────────────────────────────────────
 
 local function OnRingItemUsed(src)
-    local srcIdent = GetCharacterIdentifier(src)
-    if not srcIdent then return end
+    CreateThread(function()
+        local srcIdent = GetCharacterIdentifier(src)
+        if not srcIdent then return end
 
-    local result = MySQL.query.await(
-        'SELECT * FROM `0r_marriage` WHERE `player1` = ? OR `player2` = ?',
-        { srcIdent, srcIdent }
-    )
-    if not result or #result == 0 then
-        ServerNotify(src, Locs.youaredivorced, 'error')
-        return
-    end
+        local result = dbQuery(
+            'SELECT * FROM `0r_marriage` WHERE `player1` = ? OR `player2` = ?',
+            { srcIdent, srcIdent }
+        )
+        if not result or #result == 0 then
+            ServerNotify(src, Locs.youaredivorced, 'error')
+            return
+        end
 
-    local marriage     = result[1]
-    local isPlayer1    = (marriage.player1 == srcIdent)
-    local partnerIdent = isPlayer1 and marriage.player2 or marriage.player1
-    local storedName   = isPlayer1 and marriage.name2   or marriage.name1
+        local marriage     = result[1]
+        local isPlayer1    = (marriage.player1 == srcIdent)
+        local partnerIdent = isPlayer1 and marriage.player2 or marriage.player1
+        local storedName   = isPlayer1 and marriage.name2   or marriage.name1
+        local partnerSrc   = FindPlayerByIdentifier(partnerIdent)
 
-    local partnerSrc  = FindPlayerByIdentifier(partnerIdent)
-    TriggerClientEvent('0r-marriage-open-ring-menu', src, partnerSrc or 0, storedName or partnerIdent)
+        TriggerClientEvent('0r-marriage-open-ring-menu', src, partnerSrc or 0, storedName or partnerIdent)
+    end)
 end
 
 if Config.Inventory == 'ox' then
+    -- ox_inventory: registerHook fires when the player clicks Use on the item.
+    -- NOTE: the item must exist in ox_inventory's items database (items.lua)
+    -- with consume = 0 so it is not removed on use.
     exports.ox_inventory:registerHook('useItem', function(payload)
         if payload.item.name == Config.RingItem then
-            CreateThread(function()
-                OnRingItemUsed(payload.source)
-            end)
+            OnRingItemUsed(payload.source)
+            return false -- prevent default consumption
         end
     end, { itemFilter = { [Config.RingItem] = true } })
+
 elseif Config.Inventory == 'qb' then
     Core.Functions.CreateUseableItem(Config.RingItem, function(src)
-        CreateThread(function() OnRingItemUsed(src) end)
+        OnRingItemUsed(src)
     end)
+
 else
-    -- ESX (and ls-inventory which proxies through ESX usable items)
+    -- ESX and ls-inventory
     Core.RegisterUsableItem(Config.RingItem, function(src)
-        CreateThread(function() OnRingItemUsed(src) end)
+        OnRingItemUsed(src)
     end)
 end
