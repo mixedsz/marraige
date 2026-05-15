@@ -1,0 +1,50 @@
+Locs = {}
+
+--LUA
+Locs.priest = 'Priest'
+Locs.marriage = 'Marriage'
+Locs.marriageClick = 'Click to Get Marry'
+Locs.marriageClick = 'Click to Get Marry'
+Locs.divorce = 'Divorce'
+Locs.divorceClick = 'Click to Get Divorce'
+Locs.Draw = '[~g~E~w~] Talk With Priest'
+Locs.Target = 'Talk With Priest'
+Locs.ShowBlip = "Show On Map"
+Locs.BlipClick = "Click to show on map"
+Locs.hug = "Hug"
+Locs.hugclick = "Click to Hug"
+Locs.hud = "Fiance Hud"
+Locs.hudclick = "Click to open fiance hud"
+Locs.erp = "ERP Menu"
+Locs.erpclick = "Click to open ERP menu"
+Locs.notfiance = 'This person is not your Fiance!'
+Locs.noone = 'No one near by!'
+Locs.YourFiance = 'Your Fiance'
+Locs.noring = "You don't have engagement ring!"
+Locs.alreadymarried = "You are already married!"
+Locs.youaredivorced = "You are divorced!"
+Locs.request = 'Your Fiance want to hug you, Accept: Y | Reject: N'
+Locs.WantDivorce = 'Your fiance want to divorce!'
+Locs.doyouwantdiv = 'Do you want to divorce?'
+Locs.Priest1 = 'We are gathered here today to establish a sacred bond between these two couples.'
+Locs.Priest2 = 'This certificate is a symbol of your love and commitment.'
+Locs.Priest3 = 'In the name of the Lord, I now pronounce you married!'
+Locs.and2 = 'and'
+Locs.nocar = 'You are not in vehicle'
+Locs.erpreq = 'ERP Request: %s %s?'
+Locs.partnerOffline = 'Your partner is not online'
+
+--UI
+Locs.header1 = 'MARRIAGE'
+Locs.header2 = 'This certifies that'
+Locs.andd = 'and'
+Locs.header3 = 'were united in marriage'
+Locs.onthe = 'on the'
+Locs.dayof = 'day of'
+Locs.year = 'in the year of our Lord'
+Locs.at = 'at'
+Locs.by = 'by'
+Locs.header4 = 'in the presence of these witnesses:'
+Locs.bride = 'Bride Signature'
+Locs.groom = 'Groom Signature'
+Locs.header5 = 'May the Lord make your love increase and overflow for each other.'

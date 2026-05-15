@@ -1,0 +1,429 @@
+* {
+  user-select: none;
+}
+
+@font-face {
+  font-family: 'nekst';
+  src: local('nekst'), url(fonts/nekst.otf) format('truetype');
+}
+@font-face {
+  font-family: 'Life Savers';
+  src: local('Life Savers'), url(fonts/LifeSavers.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Luxurious Script';
+  src: local('Luxurious Script'), url(fonts/LuxuriousScript-Regular.ttf) format('truetype');
+}
+
+body {
+  display: flex;
+  margin-top: 0vh;
+  margin-left: 0vh;
+  width: 177.7778vh;
+  height: 97.2222vh;
+  overflow: hidden;
+}
+
+.container {
+  width: 177.7778vh;
+  height: 100vh;
+  background-image: url(img/linear.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  overflow: hidden;
+}
+
+.container .images {
+  width: 177.7778vh;
+  height: 100vh;
+  animation: heartbeat 3.3s infinite;
+}
+
+.container .images #img_key {
+  margin-top: -12vh;
+  margin-left: -2.5vh;
+  width: 47.4074vh;
+  height: 47.4074vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.container .images #img_ring {
+  display: flex;
+  margin-top: 27vh;
+  margin-left: -3.5vh;
+  width: 30.8889vh;
+  height: 40.5vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.container .images #img_bow {
+  display: flex;
+  margin-top: -100vh;
+  margin-left: 116.5vh;
+  width: 89.0741vh;
+  height: 95.1852vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.container .header {
+  width: 90.5vh;
+  text-align: center;
+  font-family: "nekst";
+  font-size: 5.2778vh;
+  margin-top: -80vh;
+  margin-left: 45vh;
+  font-weight: 700;
+  background: linear-gradient(91deg, #E52F63 0%, #D00B32 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.container .no {
+  position: absolute;
+  width: 31.6667vh;
+  height: 16.1111vh;
+  top: 48.9815vh;
+  left: 53.4259vh;
+  background-image: url(img/no.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  transition: transform .2s;
+}
+
+.container .no:hover {
+  cursor: pointer;
+  transform: scale(1.05);
+}
+
+.container .no .text {
+  color: #FFF;
+  text-align: center;
+  font-family: "nekst";
+  font-size: 6.0185vh;
+  margin-top: 8.2vh;
+  margin-left: 6vh;
+}
+
+.container .yes {
+  position: absolute;
+  width: 31.6667vh;
+  height: 16.1111vh;
+  top: 48.9815vh;
+  left: 92.2222vh;
+  background-image: url(img/yes.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  transition: transform .2s;
+}
+
+.container .yes:hover {
+  cursor: pointer;
+  transform: scale(1.05);
+}
+
+.container .yes .text {
+  color: #FFF;
+  text-align: center;
+  font-family: "nekst";
+  font-size: 6.0185vh;
+  margin-top: 8.2vh;
+  margin-left: 6vh;
+}
+
+@keyframes heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(0.95);
+  }
+  30% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.95);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+.marriage {
+  width: 99.4444vh;
+  height: 76.7593vh;
+  margin-top: 11.5741vh;
+  margin-left: 39.1667vh;
+  background-image: url(img/certf.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.marriage .header {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 7.8704vh;
+  margin-top: 10.8333vh;
+}
+
+.marriage .header2 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 2.8704vh;
+  margin-top: 4.5vh;
+}
+
+.marriage .name1 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 2.3148vh;
+  margin-left: -35vh;
+  margin-top: 1.9vh;
+}
+
+.marriage .name2 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 2.3148vh;
+  margin-left: 36vh;
+  margin-top: -2.75vh;
+}
+
+.marriage .and {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 2vh;
+  margin-top: -2.3vh;
+}
+
+.marriage .header3 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 2.3148vh;
+  margin-top: 1.5vh;
+}
+
+.marriage .onthe {
+  color: #525252;
+  text-align: right;
+  font-family: "Life Savers";
+  font-size: 2.3148vh;
+  margin-top: 1.2vh;
+  margin-right: 68.5vh;
+}
+
+.marriage .time {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: -2.5vh;
+  margin-left: -19vh;
+}
+
+.marriage .dayof {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: -2vh;
+  margin-left: 5.7vh;
+}
+
+.marriage .day {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: -2.3vh;
+  margin-left: 29vh;
+}
+
+.marriage .year {
+  color: #525252;
+  text-align: right;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: 2vh;
+  margin-right: 54.5vh;
+}
+
+.marriage .date {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: -2.3vh;
+  margin-left: 17vh;
+}
+
+.marriage .at {
+  color: #525252;
+  text-align: right;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: 2vh;
+  margin-right: 76vh;
+}
+
+.marriage .loc {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: -2.3vh;
+  margin-left: 0vh;
+}
+
+.marriage .by {
+  color: #525252;
+  text-align: right;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: 2vh;
+  margin-right: 76vh;
+}
+
+.marriage .priest {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: -2.3vh;
+  margin-left: 0vh;
+}
+
+.marriage .header4 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: 1.3vh;
+  margin-left: 0vh;
+}
+
+.marriage .bride {
+  color: #525252;
+  text-align: center;
+  font-family: "Luxurious Script";
+  font-size: 3.2407vh;
+  margin-top: 1.5vh;
+  margin-left: -33.5vh;
+}
+
+.marriage .groom {
+  color: #525252;
+  text-align: center;
+  color: #000;
+  text-align: center;
+  font-family: "Luxurious Script";
+  font-size: 3.2407vh;
+  margin-top: -3.95vh;
+  margin-left: 34vh;
+}
+
+.marriage .signature1 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: .1vh;
+  margin-left: -33.5vh;
+}
+
+.marriage .signature2 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.8519vh;
+  margin-top: -2.2vh;
+  margin-left: 34vh;
+}
+
+.marriage .header5 {
+  color: #525252;
+  text-align: center;
+  font-family: "Life Savers";
+  font-size: 1.5741vh;
+  margin-top: 1.3vh;
+  margin-left: 0vh;
+}
+
+@font-face {
+  font-family: 'Sentic';
+  src: local('Sentic'), url(fonts/Sentic.otf) format('truetype');
+}
+
+.marri-menu {
+  position: absolute;
+  margin-top: 94vh;
+  margin-left: 120vh;
+  width: 13.9556vh;
+  height: 6vh;
+  /* background: linear-gradient(to bottom, rgba(229, 47, 99, 0.0), rgba(229, 47, 99, 0.2), rgba(208, 11, 50, 0.5), rgba(208, 11, 50, 0.6)); */
+  background: linear-gradient(to bottom,  rgba(0, 123, 255, 0.0), rgba(0, 123, 255, 0.2), rgba(0, 56, 168, 0.5),  rgba(0, 38, 122, 0.7));
+}
+
+.marri-menu .date{
+  position: relative;
+  top: 1.4vh;
+  color: rgba(255, 255, 255, 0.915);
+  font-family: 'Sentic';
+  font-size: 1.3vh;
+  text-align: center;
+}
+
+.marri-menu .name{
+  position: relative;
+  margin-top: 1.8vh;
+  color: white;
+  font-family: 'Sentic';
+  font-size: 1.6vh;
+  text-align: center;
+}
+
+
+.marri-menu #heart{
+  position: absolute;
+  height: 4.5vh;
+  bottom: 3.7vh;
+  left: 10vh;
+}
+
+.priest { position: absolute; }
+
+.priest .top {
+  margin-top: 0vh;
+  margin-left: 0vh;
+  width: 177.7778vh;
+  height: 15vh;
+  background-color: #000000ee;
+}
+
+.priest .bot {
+  margin-top: 70vh;
+  margin-left: 0vh;
+  width: 177.7778vh;
+  height: 15vh;
+  background-color: #000000ee;
+}
+
+.priest .bot .text {
+  margin-left: 20vh;
+  padding-top: 4vh;
+  color: white;
+  font-family: 'Sentic';
+  font-size: 1.4vh;
+  text-align: center;
+  line-height: 2vh;
+  width: 140vh;
+}
