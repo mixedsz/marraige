@@ -4,18 +4,26 @@ local pendingData = {}
 
 -- ─────────────────────────────────────────────
 --  MySQL compatibility helpers
---  Some oxmysql builds expose MySQL.query/execute
---  as plain functions (not tables), so .await
---  cannot be indexed on them.  Citizen.Await()
---  works with any version that returns a promise.
+--  Older oxmysql builds require a callback and
+--  return nil instead of a promise.  We wrap the
+--  callback in a native FiveM promise so that
+--  Citizen.Await works on every build.
 -- ─────────────────────────────────────────────
 
 local function dbQuery(query, params)
-    return Citizen.Await(MySQL.query(query, params))
+    local p = promise.new()
+    MySQL.query(query, params, function(result)
+        p:resolve(result or {})
+    end)
+    return Citizen.Await(p)
 end
 
 local function dbExecute(query, params)
-    return Citizen.Await(MySQL.execute(query, params))
+    local p = promise.new()
+    MySQL.execute(query, params, function(rows)
+        p:resolve(rows or 0)
+    end)
+    return Citizen.Await(p)
 end
 
 -- ─────────────────────────────────────────────
