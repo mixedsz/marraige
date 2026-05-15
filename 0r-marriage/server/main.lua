@@ -386,15 +386,22 @@ local function OnRingItemUsed(src)
 end
 
 if Config.Inventory == 'ox' then
-    -- ox_inventory: registerHook fires when the player clicks Use on the item.
-    -- NOTE: the item must exist in ox_inventory's items database (items.lua)
-    -- with consume = 0 so it is not removed on use.
-    exports.ox_inventory:registerHook('useItem', function(payload)
-        if payload.item.name == Config.RingItem then
-            OnRingItemUsed(payload.source)
-            return false -- prevent default consumption
-        end
-    end, { itemFilter = { [Config.RingItem] = true } })
+    -- Primary: server.event defined in data/items.lua fires this when player clicks Use.
+    -- data/items.lua is auto-loaded by ox_inventory v3+ so the Use button appears.
+    RegisterNetEvent('0r-marriage:useRingItem', function()
+        OnRingItemUsed(source)
+    end)
+
+    -- Secondary: registerHook also fires for any ox_inventory version that supports it.
+    -- Both paths call the same function so doubling up is harmless.
+    pcall(function()
+        exports.ox_inventory:registerHook('useItem', function(payload)
+            if payload.item.name == Config.RingItem then
+                OnRingItemUsed(payload.source)
+                return false
+            end
+        end, { itemFilter = { [Config.RingItem] = true } })
+    end)
 
 elseif Config.Inventory == 'qb' then
     Core.Functions.CreateUseableItem(Config.RingItem, function(src)
