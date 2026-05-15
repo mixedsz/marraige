@@ -17,7 +17,6 @@ files {
     "ui/index.html",
     "ui/script.js",
     "ui/style.css",
-    "data/items.lua",
 }
 
 shared_scripts {

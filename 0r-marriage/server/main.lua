@@ -385,15 +385,14 @@ local function OnRingItemUsed(src)
     end)
 end
 
-if Config.Inventory == 'ox' then
-    -- Primary: server.event defined in data/items.lua fires this when player clicks Use.
-    -- data/items.lua is auto-loaded by ox_inventory v3+ so the Use button appears.
-    RegisterNetEvent('0r-marriage:useRingItem', function()
-        OnRingItemUsed(source)
-    end)
+-- /ringmenu command works for all inventory types
+RegisterNetEvent('0r-marriage:openRingMenuCmd', function() OnRingItemUsed(source) end)
 
-    -- Secondary: registerHook also fires for any ox_inventory version that supports it.
-    -- Both paths call the same function so doubling up is harmless.
+if Config.Inventory == 'ox' then
+    -- server.event defined in data/items.lua fires this when player clicks Use
+    RegisterNetEvent('0r-marriage:useRingItem', function() OnRingItemUsed(source) end)
+
+    -- registerHook as secondary path; pcall so unsupported builds don't crash
     pcall(function()
         exports.ox_inventory:registerHook('useItem', function(payload)
             if payload.item.name == Config.RingItem then
