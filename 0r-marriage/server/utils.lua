@@ -37,8 +37,12 @@ end
 -- Returns true if the player currently has at least one of the given item.
 function HasItem(src, item)
     if Config.Inventory == 'ox' then
+        -- Search can return a number, false, or nil depending on ox_inventory version.
+        -- Use slot search as a fallback so we never compare a boolean with a number.
         local count = exports.ox_inventory:Search(src, 'count', item)
-        return count ~= nil and count > 0
+        if type(count) == 'number' then return count > 0 end
+        local slots = exports.ox_inventory:Search(src, 'slots', item)
+        return type(slots) == 'table' and #slots > 0
     elseif Config.Inventory == 'qb' then
         local Player = Core.Functions.GetPlayer(src)
         if Player then
