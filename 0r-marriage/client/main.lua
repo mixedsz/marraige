@@ -740,6 +740,7 @@ end)
 
 RegisterNetEvent('0r-marriage:playSynced', function(serverid, id, type)
     local anim = Config.ERPAnims[id][type]
+    targetPlayerId = serverid  -- lets the shared cancel chain reach the other player
 
     local target = GetPlayerPed(GetPlayerFromServerId(serverid))
     if anim['Attach'] then
@@ -759,10 +760,22 @@ RegisterNetEvent('0r-marriage:playSynced', function(serverid, id, type)
         anim = Config.ERPAnims[id]['Requester']
     end
 
-    Wait(12500)
+    local endTime = GetGameTimer() + 12500
+    while GetGameTimer() < endTime do
+        Wait(0)
+        if cancelEmoteKey then
+            cancelEmoteKey = false
+            break
+        end
+    end
+
     ClearPedTasks(target)
     ClearPedTasks(PlayerPedId())
     DetachEntity(PlayerPedId())
+    if targetPlayerId then
+        TriggerServerEvent('ServerEmoteCancel', targetPlayerId)
+        targetPlayerId = nil
+    end
 end)
 
 RegisterNetEvent("SyncPlayEmote", function(emote, player)
@@ -774,10 +787,22 @@ RegisterNetEvent("SyncPlayEmote", function(emote, player)
         LoadDict(emote.dict)
         TaskPlayAnim(PlayerPedId(), emote.dict, emote.anim, 5.0, 5.0, -1, 1, 0, false, false, false)
         RemoveAnimDict(emote.dict)
-        Wait(15000)
+
+        local endTime = GetGameTimer() + 15000
+        while GetGameTimer() < endTime do
+            Wait(0)
+            if cancelEmoteKey then
+                cancelEmoteKey = false
+                break
+            end
+        end
+
         ClearPedTasksImmediately(PlayerPedId())
         DetachEntity(PlayerPedId())
-        TriggerServerEvent('ServerEmoteCancel', targetPlayerId)
+        if targetPlayerId then
+            TriggerServerEvent('ServerEmoteCancel', targetPlayerId)
+            targetPlayerId = nil
+        end
     end
 end)
 
@@ -826,14 +851,29 @@ RegisterNetEvent("SyncPlayEmoteSource", function(emote, player)
     LoadDict(Config.AddOnAnims[emote].dict)
     TaskPlayAnim(PlayerPedId(), Config.AddOnAnims[emote].dict, Config.AddOnAnims[emote].anim, 5.0, 5.0, -1, 1, 0, false, false, false)
     RemoveAnimDict(Config.AddOnAnims[emote].dict)
-    Wait(15000)
+    local endTime = GetGameTimer() + 15000
+    while GetGameTimer() < endTime do
+        Wait(0)
+        if cancelEmoteKey then
+            cancelEmoteKey = false
+            break
+        end
+    end
+
     ClearPedTasksImmediately(PlayerPedId())
     DetachEntity(PlayerPedId())
+    if targetPlayerId then
+        TriggerServerEvent('ServerEmoteCancel', targetPlayerId)
+        targetPlayerId = nil
+    end
 end)
 
 RegisterNetEvent("SyncCancelEmote", function(player)
-    if targetPlayerId and targetPlayerId == player then
+    -- Clear for any matching player OR when we have no targetPlayerId tracked
+    -- (covers ERP anims that set targetPlayerId = serverid)
+    if not targetPlayerId or targetPlayerId == player then
         targetPlayerId = nil
+        cancelEmoteKey = false
         ClearPedTasksImmediately(PlayerPedId())
         DetachEntity(PlayerPedId())
     end
